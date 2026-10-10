@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>肤质测试 · 找到你的专属护肤方案</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #FAF7F2;
+    --card: #FFFFFF;
+    --text: #2C2A27;
+    --muted: #9A928A;
+    --accent: #B08968;
+    --accent-deep: #8C6B4F;
+    --accent-soft: #F2EAE0;
+    --accent-softer: #F8F3EC;
+    --border: #EDE7DE;
+    --radius: 18px;
+    --shadow: 0 1px 2px rgba(44, 42, 39, .04), 0 10px 30px rgba(44, 42, 39, .07);
+    --shadow-hover: 0 2px 6px rgba(44, 42, 39, .06), 0 16px 40px rgba(176, 137, 104, .14);
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    /* 柔和的品牌色光晕，增加层次感但不破坏极简风 */
+    background-image:
+      radial-gradient(1200px 500px at 50% -100px, rgba(176, 137, 104, .10), transparent 70%),
+      radial-gradient(800px 400px at 100% 100%, rgba(176, 137, 104, .05), transparent 60%);
+    background-attachment: fixed;
+  }
+  .app {
+    width: 100%;
+    max-width: 560px;
+    min-height: 100vh;
+    padding: 28px 20px 56px;
+  }
+  .screen { display: none; animation: fade .35s ease; }
+  .screen.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  /* ---------- 开始页 ---------- */
+  .hero { padding-top: 40px; }
+  .hero-badge {
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    color: var(--accent-deep);
+    background: var(--accent-soft);
+    padding: 6px 14px;
+    border-radius: 100px;
+    margin-bottom: 24px;
+    font-weight: 600;
+  }
+  .hero h1 {
+    font-size: 40px;
+    line-height: 1.25;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 18px;
+  }
+  /* 标题中"专属肤质"做渐变色点缀，与整体铜棕色调呼应 */
+  .hero h1 em {
+    font-style: normal;
+    background: linear-gradient(120deg, var(--accent) 0%, var(--accent-deep) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero-sub {
+    color: var(--muted);
+    font-size: 15px;
+    margin-bottom: 32px;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 36px;
+  }
+  .hero-meta span {
+    font-size: 12.5px;
+    color: var(--muted);
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 7px 12px;
+    border-radius: 100px;
+  }
+  .btn-primary {
+    width: 100%;
+    background: linear-gradient(180deg, #3A3733 0%, var(--text) 100%);
+    color: #fff;
+    border: none;
+    padding: 17px;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform .15s, box-shadow .2s, filter .2s;
+    box-shadow: 0 8px 24px rgba(44, 42, 39, .18);
+  }
+  .btn-primary:hover { filter: brightness(1.08); box-shadow: var(--shadow-hover); }
+  .btn-primary:active { transform: scale(.98); }
+  .disclaimer {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 20px;
+    line-height: 1.7;
+  }
+
+  /* ---------- 答题页 ---------- */
+  .quiz-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 36px;
+  }
+  .btn-back {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 4px 8px;
+    font-family: inherit;
+    flex-shrink: 0;
+    border-radius: 10px;
+    transition: background .15s, color .15s;
+  }
+  .btn-back:hover { background: var(--accent-softer); color: var(--accent-deep); }
+  .progress {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, var(--accent), var(--accent-deep));
+    border-radius: 100px;
+    transition: width .35s ease;
+  }
+  .q-counter {
+    font-size: 12px;
+    color: var(--muted);
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .q-title {
+    font-size: 21px;
+    font-weight: 600;
+    line-height: 1.5;
+    margin-bottom: 28px;
+    letter-spacing: -0.2px;
+  }
+  /* 多选题提示 */
+  .q-hint {
+    display: inline-block;
+    font-size: 11.5px;
+    letter-spacing: 1px;
+    color: var(--accent-deep);
+    background: var(--accent-soft);
+    border-radius: 100px;
+    padding: 4px 12px;
+    margin-bottom: 18px;
+  }
+  .options { display: flex; flex-direction: column; gap: 11px; }
+  .option {
+    width: 100%;
+    text-align: left;
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 17px 18px;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--text);
+    cursor: pointer;
+    line-height: 1.55;
+    transition: border-color .2s, background .2s, transform .12s, box-shadow .2s;
+  }
+  .option:hover { border-color: #D9C9B8; box-shadow: 0 4px 14px rgba(44,42,39,.05); }
+  .option:active { transform: scale(.985); }
+  .option.selected {
+    border-color: var(--accent);
+    background: var(--accent-softer);
+    font-weight: 500;
+    box-shadow: 0 4px 14px rgba(176,137,104,.15);
+    position: relative;
+  }
+  /* 选中态在右侧显示一个小圆点标记 */
+  .option.selected::after {
+    content: "";
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .quiz-foot { margin-top: 26px; }
+
+  /* ---------- 结果页 ---------- */
+  .result-head { text-align: center; padding: 20px 0 32px; }
+  .result-label {
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .result-name {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 14px;
+    background: linear-gradient(120deg, var(--text) 0%, var(--accent-deep) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .result-code {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: var(--accent-deep);
+    background: var(--accent-soft);
+    padding: 7px 18px;
+    border-radius: 100px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 20px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow);
+    animation: cardIn .4s ease both;
+  }
+  /* 结果页卡片逐个浮入，节奏感更好 */
+  .card:nth-child(2) { animation-delay: .05s; }
+  .card:nth-child(3) { animation-delay: .1s; }
+  .card:nth-child(4) { animation-delay: .15s; }
+  .card:nth-child(5) { animation-delay: .2s; }
+  .card:nth-child(6) { animation-delay: .25s; }
+  .card:nth-child(7) { animation-delay: .3s; }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .card h3 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    letter-spacing: 0.3px;
+  }
+  .card p { font-size: 14.5px; color: #4A4642; }
+  .card ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .card li {
+    font-size: 14.5px;
+    color: #4A4642;
+    padding-left: 20px;
+    position: relative;
+    line-height: 1.65;
+  }
+  .card li::before {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 10px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-size: 13px;
+    padding: 7px 14px;
+    border-radius: 100px;
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+    font-weight: 500;
+  }
+  .chip.plain {
+    background: #F5F3F0;
+    color: #6B6560;
+  }
+  .result-actions { margin-top: 28px; }
+
+  /* 桌面端稍微优化 */
+  @media (min-width: 600px) {
+    .app { padding-top: 40px; }
+    .hero { padding-top: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 开始页 -->
+  <section id="screen-start" class="screen active">
+    <div class="hero">
+      <div class="hero-badge">SKIN TYPE TEST</div>
+      <h1>找到你的<br><em>专属肤质</em></h1>
+      <p class="hero-sub">12 道题，像做 MBTI 一样<br>测出你的肤质类型与护理重点</p>
+      <div class="hero-meta">
+        <span>⏱ 约 2 分钟</span>
+        <span>📋 12 道题</span>
+        <span>🔒 无需注册</span>
+      </div>
+      <button class="btn-primary" id="btn-start">开始测试</button>
+      <p class="disclaimer">本测试仅供护肤参考，不能替代皮肤科诊断。<br>如有严重皮肤问题，请咨询专业医生。</p>
+    </div>
+  </section>
+
+  <!-- 答题页 -->
+  <section id="screen-quiz" class="screen">
+    <div class="quiz-head">
+      <button class="btn-back" id="btn-back" aria-label="上一题">←</button>
+      <div class="progress"><div class="progress-bar" id="progress-bar"></div></div>
+      <div class="q-counter" id="q-counter">1/12</div>
+    </div>
+    <h2 class="q-title" id="q-title"></h2>
+    <div class="q-hint" id="q-hint" style="display:none">可多选</div>
+    <div class="options" id="options"></div>
+    <div class="quiz-foot" id="quiz-foot"></div>
+  </section>
+
+  <!-- 结果页 -->
+  <section id="screen-result" class="screen">
+    <div id="result-content"></div>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  /* ============ 题库 ============ */
+  const questions = [
+    {
+      q: "洗完脸后，不涂任何护肤品，多久开始觉得紧绷？",
+      type: "single",
+      options: [
+        { t: "一直不觉得，甚至很快就出油", s: { oily: 2, acne: 1 } },
+        { t: "20-30 分钟后开始轻微紧绷", s: { normal: 2 } },
+        { t: "10-20 分钟后明显紧绷", s: { dry: 2 } },
+        { t: "立刻紧绷、刺痛或起皮", s: { dry: 2, sensitive: 1 } }
+      ]
+    },
+    {
+      q: "早上洗完脸，到中午时脸上出油情况？",
+      type: "single",
+      options: [
+        { t: "全脸都有明显油光", s: { oily: 2 } },
+        { t: "额头、鼻子油，两颊正常或偏干", s: { combo: 2 } },
+        { t: "全脸几乎不出油，甚至起皮", s: { dry: 2 } },
+        { t: "只有鼻翼附近轻微油光", s: { normal: 2 } }
+      ]
+    },
+    {
+      q: "你的毛孔在哪些部位比较明显？",
+      type: "single",
+      options: [
+        { t: "全脸都明显，尤其额头和鼻子", s: { oily: 2 } },
+        { t: "只有鼻子和额头明显", s: { combo: 2 } },
+        { t: "几乎看不到，但容易起皮", s: { dry: 2 } },
+        { t: "鼻翼附近轻微可见", s: { normal: 2 } }
+      ]
+    },
+    {
+      q: "下午化妆或涂完防晒后，通常是什么状态？",
+      type: "single",
+      options: [
+        { t: "全脸脱妆、斑驳、油光明显", s: { oily: 2, acne: 1 } },
+        { t: "T 区脱妆，两颊卡粉", s: { combo: 2 } },
+        { t: "全脸卡粉、浮粉、起皮", s: { dry: 2 } },
+        { t: "基本完整，只有轻微光泽", s: { normal: 2 } }
+      ]
+    },
+    {
+      q: "你的痘痘、闭口通常长在哪里？",
+      type: "single",
+      options: [
+        { t: "全脸、下巴、脸颊都长", s: { oily: 1, acne: 2 } },
+        { t: "主要在额头和鼻子", s: { combo: 1, oily: 1, acne: 1 } },
+        { t: "很少长，但皮肤偏干", s: { dry: 2 } },
+        { t: "几乎不长", s: { normal: 2 } }
+      ]
+    },
+    {
+      q: "换季或进入空调房，皮肤会怎样？",
+      type: "single",
+      options: [
+        { t: "出油更多，容易闷痘", s: { oily: 2, acne: 1 } },
+        { t: "T 区油，两颊干", s: { combo: 2 } },
+        { t: "干燥、起皮、发痒", s: { dry: 2, sensitive: 1 } },
+        { t: "没什么明显变化", s: { normal: 2 } }
+      ]
+    },
+    {
+      q: "使用新护肤品时，你的皮肤会？",
+      type: "single",
+      options: [
+        { t: "经常刺痛、泛红、发热", s: { sensitive: 2 } },
+        { t: "偶尔轻微刺痛，很快消失", s: { sensitive: 1 } },
+        { t: "很少不适", s: {} },
+        { t: "从不不适", s: {} }
+      ]
+    },
+    {
+      q: "你的脸容易泛红吗？",
+      type: "single",
+      options: [
+        { t: "经常，遇热或情绪激动更红", s: { sensitive: 2 } },
+        { t: "偶尔，比如换季或晒后", s: { sensitive: 1 } },
+        { t: "很少", s: {} },
+        { t: "从不", s: {} }
+      ]
+    },
+    {
+      q: "风吹、日晒或温度变化时，皮肤会？",
+      type: "single",
+      options: [
+        { t: "容易发红、发烫、刺痛", s: { sensitive: 2 } },
+        { t: "偶尔发红", s: { sensitive: 1 } },
+        { t: "基本没事", s: {} },
+        { t: "完全没事", s: {} }
+      ]
+    },
+    {
+      q: "使用酸类、A 醇、去角质产品时？",
+      type: "single",
+      options: [
+        { t: "很容易刺痛、脱皮、泛红", s: { sensitive: 2 } },
+        { t: "需要慢慢建立耐受", s: { sensitive: 1 } },
+        { t: "正常使用没问题", s: {} },
+        { t: "经常用也没事", s: {} }
+      ]
+    },
+    {
+      q: "晒后皮肤通常是什么反应？",
+      type: "single",
+      options: [
+        { t: "容易红、痛、脱皮", s: { sensitive: 2 } },
+        { t: "会红，但一两天就恢复", s: { sensitive: 1 } },
+        { t: "会变黑，但不红", s: {} },
+        { t: "不容易晒伤", s: {} }
+      ]
+    },
+    {
+      q: "你最想改善的皮肤问题是？（可多选）",
+      type: "multi",
+      options: [
+        { t: "痘痘 / 闭口" },
+        { t: "出油" },
+        { t: "干燥 / 起皮" },
+        { t: "毛孔粗大" },
+        { t: "泛红 / 敏感" },
+        { t: "暗沉 / 肤色不均" },
+        { t: "细纹 / 初老" },
+        { t: "色斑" },
+        { t: "松弛" }
+      ]
+    }
+  ];
+
+  /* ============ 肤质档案 ============ */
+  const PROFILES = {
+    "oily": {
+      code: "O",
+      name: "油性肌",
+      desc: "皮脂分泌旺盛，全脸容易出油，毛孔较明显，容易脱妆、闷痘。",
+      care: [
+        "早晚温和洁面，选氨基酸类，不要用皂基猛搓",
+        "水乳选清爽型，凝胶或乳液质地，避免厚重面霜",
+        "控油可选烟酰胺、PCA 锌、水杨酸类",
+        "防晒选清爽控油型，注意补涂"
+      ],
+      good: ["烟酰胺", "水杨酸", "PCA 锌", "锌盐", "茶树提取物"],
+      avoid: ["厚重面霜", "矿物油", "频繁去角质", "高浓度酒精"]
+    },
+    "dry": {
+      code: "D",
+      name: "干性肌",
+      desc: "容易紧绷、起皮、卡粉，屏障偏弱，细纹容易先出现。",
+      care: [
+        "减少洁面频率，早上可用清水，晚上用温和洁面",
+        "选含神经酰胺、角鲨烷、甘油、透明质酸的保湿品",
+        "面霜锁水，必要时叠加护肤油",
+        "坚持防晒，干燥会加重光老化"
+      ],
+      good: ["神经酰胺", "角鲨烷", "透明质酸", "甘油", "泛醇"],
+      avoid: ["皂基洁面", "频繁去角质", "高浓度酸", "酒精"]
+    },
+    "combo": {
+      code: "B",
+      name: "混合肌",
+      desc: "T 区出油、两颊偏干，需要分区护理。",
+      care: [
+        "T 区用清爽控油产品，两颊用保湿修护产品",
+        "洁面全脸温和，不要只搓 T 区",
+        "面膜分区敷，T 区控油、两颊补水",
+        "根据季节调整，夏天偏控油、冬天偏保湿"
+      ],
+      good: ["T 区：烟酰胺 / 水杨酸", "两颊：神经酰胺 / 角鲨烷", "透明质酸"],
+      avoid: ["全脸用同一套强控油", "全脸用同一套强滋润", "只护理 T 区"]
+    },
+    "combo-oily": {
+      code: "BO",
+      name: "混合偏油",
+      desc: "T 区明显出油，两颊轻微干或正常，容易在 T 区闷痘。",
+      care: [
+        "以油性肌思路为主，T 区重点控油疏通",
+        "两颊适当保湿，不要跟着 T 区一起猛控油",
+        "洁面全脸温和，T 区可多停留几秒",
+        "防晒选清爽型，注意补涂"
+      ],
+      good: ["烟酰胺", "水杨酸", "PCA 锌", "两颊：神经酰胺"],
+      avoid: ["全脸厚重滋润", "全脸猛刷酸", "皂基洁面"]
+    },
+    "combo-dry": {
+      code: "BD",
+      name: "混合偏干",
+      desc: "T 区轻微出油，两颊明显偏干，容易卡粉、起皮。",
+      care: [
+        "以干性肌思路为主，两颊重点保湿修护",
+        "T 区适度清洁，不要过度去角质",
+        "面霜可以全脸薄涂，两颊加厚",
+        "防晒优先，干燥会加重光老化"
+      ],
+      good: ["神经酰胺", "角鲨烷", "透明质酸", "T 区：温和控油"],
+      avoid: ["全脸强控油", "皂基洁面", "频繁去角质"]
+    },
+    "normal": {
+      code: "N",
+      name: "中性肌",
+      desc: "水油较平衡，状态稳定，不容易出问题。",
+      care: [
+        "温和清洁 + 保湿 + 防晒，别过度折腾",
+        "保持规律作息，少熬夜",
+        "换季时适当调整保湿力度",
+        "不要频繁更换护肤品"
+      ],
+      good: ["氨基酸洁面", "基础保湿", "广谱防晒"],
+      avoid: ["频繁换产品", "过度去角质", "叠加太多功效成分"]
+    }
+  };
+
+  /* ============ 状态 ============ */
+  let currentQ = 0;
+  let locked = false;
+  const answers = new Array(questions.length).fill(null);
+
+  const elStart = document.getElementById("screen-start");
+  const elQuiz = document.getElementById("screen-quiz");
+  const elResult = document.getElementById("screen-result");
+  const elTitle = document.getElementById("q-title");
+  const elHint = document.getElementById("q-hint");
+  const elOptions = document.getElementById("options");
+  const elProgress = document.getElementById("progress-bar");
+  const elCounter = document.getElementById("q-counter");
+  const elFoot = document.getElementById("quiz-foot");
+  const elBack = document.getElementById("btn-back");
+
+  function show(el) {
+    [elStart, elQuiz, elResult].forEach(s => s.classList.remove("active"));
+    el.classList.add("active");
+    window.scrollTo(0, 0);
+  }
+
+  /* ============ 渲染答题页 ============ */
+  function renderQuiz() {
+    const q = questions[currentQ];
+    locked = false;
+
+    elProgress.style.width = (currentQ / questions.length * 100) + "%";
+    elCounter.textContent = (currentQ + 1) + "/" + questions.length;
+    elTitle.textContent = q.q;
+    elBack.style.visibility = currentQ === 0 ? "hidden" : "visible";
+    elHint.style.display = q.type === "multi" ? "inline-block" : "none";
+
+    const sel = answers[currentQ];
+    elOptions.innerHTML = q.options.map((opt, i) => {
+      let selected;
+      if (q.type === "multi") {
+        selected = Array.isArray(sel) && sel.indexOf(i) > -1;
+      } else {
+        selected = sel === i;
+      }
+      return '<button class="option' + (selected ? " selected" : "") + '" data-i="' + i + '">' + opt.t + "</button>";
+    }).join("");
+
+    if (q.type === "multi") {
+      const selectedCount = Array.isArray(answers[currentQ]) ? answers[currentQ].length : 0;
+      elFoot.innerHTML = '<button class="btn-primary" id="btn-multi-next">查看结果' + (selectedCount ? "（已选 " + selectedCount + " 项）" : "") + "</button>";
+      document.getElementById("btn-multi-next").addEventListener("click", function () {
+        if (currentQ === questions.length - 1) {
+          finish();
+        } else {
+          currentQ++;
+          renderQuiz();
+        }
+      });
+    } else {
+      elFoot.innerHTML = "";
+    }
+  }
+
+  /* ============ 点击选项 ============ */
+  elOptions.addEventListener("click", function (e) {
+    const btn = e.target.closest(".option");
+    if (!btn) return;
+    if (locked) return;
+
+    const i = Number(btn.dataset.i);
+    const q = questions[currentQ];
+
+    if (q.type === "multi") {
+      let arr = Array.isArray(answers[currentQ]) ? answers[currentQ].slice() : [];
+      const pos = arr.indexOf(i);
+      if (pos > -1) arr.splice(pos, 1);
+      else arr.push(i);
+      answers[currentQ] = arr;
+      renderQuiz();
+    } else {
+      answers[currentQ] = i;
+      renderQuiz();
+      locked = true;
+      setTimeout(function () {
+        if (currentQ < questions.length - 1) {
+          currentQ++;
+          renderQuiz();
+        } else {
+          finish();
+        }
+      }, 260);
+    }
+  });
+
+  elBack.addEventListener("click", function () {
+    if (currentQ > 0) {
+      currentQ--;
+      renderQuiz();
+    }
+  });
+
+  /* ============ 计分 ============ */
+  function calculateScores() {
+    const s = { oily: 0, dry: 0, combo: 0, normal: 0, sensitive: 0, acne: 0 };
+    questions.forEach(function (q, i) {
+      if (q.type === "multi") return;
+      const a = answers[i];
+      if (a === null || a === undefined) return;
+      const opt = q.options[a];
+      if (!opt || !opt.s) return;
+      for (const k in opt.s) {
+        if (s[k] !== undefined) s[k] += opt.s[k];
+      }
+    });
+    return s;
+  }
+
+  /* ============ 判定肤质 ============ */
+  function determineType(s) {
+    const order = [
+      ["oily", s.oily],
+      ["dry", s.dry],
+      ["combo", s.combo],
+      ["normal", s.normal]
+    ];
+    let baseKey = order[0][0];
+    let maxVal = order[0][1];
+    order.forEach(function (item) {
+      if (item[1] > maxVal) {
+        maxVal = item[1];
+        baseKey = item[0];
+      }
+    });
+
+    let key = baseKey;
+
+    if (baseKey === "combo") {
+      if (s.oily >= s.dry + 2) key = "combo-oily";
+      else if (s.dry >= s.oily + 2) key = "combo-dry";
+    } else if (baseKey === "oily" && (s.oily - s.combo) <= 2) {
+      key = "combo-oily";
+    } else if (baseKey === "dry" && (s.dry - s.combo) <= 2) {
+      key = "combo-dry";
+    }
+
+    const isSensitive = s.sensitive >= 5;
+    const isAcne = s.acne >= 3;
+
+    return { key: key, isSensitive: isSensitive, isAcne: isAcne };
+  }
+
+  /* ============ 完成 ============ */
+  function finish() {
+    const s = calculateScores();
+    const r = determineType(s);
+    const profile = PROFILES[r.key];
+
+    let code = profile.code;
+    code += "-" + (r.isSensitive ? "S" : "T");
+    code += "-" + (r.isAcne ? "A" : "C");
+
+    // 关注点
+    const lastQ = questions[questions.length - 1];
+    const multiAns = answers[answers.length - 1];
+    let tags = [];
+    if (Array.isArray(multiAns)) {
+      tags = multiAns.map(function (i) { return lastQ.options[i].t; });
+    }
+
+    // 组装 HTML
+    let html = "";
+    html += '<div class="result-head">';
+    html += '<div class="result-label">你的肤质类型</div>';
+    html += '<h1 class="result-name">' + profile.name + "</h1>";
+    html += '<div class="result-code">' + code + "</div>";
+    html += "</div>";
+
+    html += '<div class="card"><h3>📌 特征</h3><p>' + profile.desc + "</p></div>";
+
+    html += '<div class="card"><h3>🧴 护理重点</h3><ul>';
+    profile.care.forEach(function (c) { html += "<li>" + c + "</li>"; });
+    html += "</ul></div>";
+
+    html += '<div class="card"><h3>✅ 推荐成分</h3><div class="chips">';
+    profile.good.forEach(function (c) { html += '<span class="chip">' + c + "</span>"; });
+    html += "</div></div>";
+
+    html += '<div class="card"><h3>⚠️ 尽量避开</h3><ul>';
+    profile.avoid.forEach(function (c) { html += "<li>" + c + "</li>"; });
+    html += "</ul></div>";
+
+    if (r.isSensitive) {
+      html += '<div class="card"><h3>🌿 敏感肌加分建议</h3><ul>';
+      html += "<li>精简护肤，成分越少越好，一次只加一个新东西</li>";
+      html += "<li>新产品先在耳后或下颌角测试 24 小时</li>";
+      html += "<li>避开高浓度酸、A 醇、磨砂、香精、酒精</li>";
+      html += "<li>优先选神经酰胺、积雪草、泛醇、红没药醇、依克多因</li>";
+      html += "<li>泛红发烫时先冷敷镇静，不要立刻叠护肤品</li>";
+      html += "</ul></div>";
+    }
+
+    if (r.isAcne) {
+      html += '<div class="card"><h3>💡 易痘肌加分建议</h3><ul>';
+      html += "<li>不要用手挤，容易留印、留坑</li>";
+      html += "<li>清洁适度，过度去角质反而加重闭口</li>";
+      html += "<li>水杨酸、壬二酸可局部点涂，先建立耐受</li>";
+      html += "<li>枕套勤换，刘海尽量不贴额头</li>";
+      html += "<li>反复长痘、有囊肿，建议直接看皮肤科</li>";
+      html += "</ul></div>";
+    }
+
+    if (tags.length > 0) {
+      html += '<div class="card"><h3>🎯 你的关注点</h3><div class="chips">';
+      tags.forEach(function (t) { html += '<span class="chip plain">' + t + "</span>"; });
+      html += "</div></div>";
+    }
+
+    html += '<div class="result-actions">';
+    html += '<button class="btn-primary" id="btn-restart">重新测试</button>';
+    html += "</div>";
+    html += '<p class="disclaimer">本测试仅供护肤参考，不能替代皮肤科诊断。<br>如有严重皮肤问题，请咨询专业医生。</p>';
+
+    document.getElementById("result-content").innerHTML = html;
+    document.getElementById("btn-restart").addEventListener("click", function () {
+      currentQ = 0;
+      locked = false;
+      answers.fill(null);
+      renderQuiz();
+      show(elStart);
+    });
+
+    show(elResult);
+  }
+
+  /* ============ 启动 ============ */
+  document.getElementById("btn-start").addEventListener("click", function () {
+    currentQ = 0;
+    answers.fill(null);
+    renderQuiz();
+    show(elQuiz);
+  });
+
+})();
+</script>
+</body>
+</html>
